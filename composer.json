@@ -1,0 +1,41 @@
+{
+  "name": "ket-php/turnstile",
+  "description": "Simple and lightweight Cloudflare Turnstile library for PHP",
+  "keywords": [
+    "php",
+    "turnstile",
+    "captcha",
+    "protection",
+    "security",
+    "cloudflare",
+    "ketphp",
+    "ket-php"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "KetPHP\\Turnstile\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Alexander Mikhno",
+      "email": "mikhno351@yandex.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "ext-mbstring": "*",
+    "php": "^8.1",
+    "psr/log": "^3.0",
+    "guzzlehttp/guzzle": "^8.3"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "homepage": "https://github.com/mikhno351/KetPHP-Turnstile",
+  "support": {
+    "issues": "https://github.com/mikhno351/KetPHP-Turnstile/issues",
+    "source": "https://github.com/mikhno351/KetPHP-Turnstile"
+  }
+}
