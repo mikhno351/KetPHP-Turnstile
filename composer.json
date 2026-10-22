@@ -27,9 +27,9 @@
   ],
   "require": {
     "ext-mbstring": "*",
+    "ext-curl": "*",
     "php": "^8.1",
-    "psr/log": "^3.0",
-    "guzzlehttp/guzzle": "^8.3"
+    "psr/log": "^1.0"
   },
   "minimum-stability": "stable",
   "prefer-stable": true,

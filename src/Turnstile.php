@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace KetPHP\Turnstile;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
 use KetPHP\Turnstile\Common\Support\Reference\TurnstileCode;
 use KetPHP\Turnstile\Common\TurnstileInterface;
+use KetPHP\Turnstile\Exception\InternalTurnstileException;
 use KetPHP\Turnstile\Exception\TurnstileException;
 use KetPHP\Turnstile\Relation\TurnstileVerifyRelation;
 use Psr\Log\LoggerInterface;
@@ -39,17 +37,12 @@ class Turnstile implements TurnstileInterface
     /** @var string Request payload field name for the user's remote IP address. */
     public const TURNSTILE_REQUEST_FIELD_NAME_REMOTE_IP = 'remoteip';
 
-    private readonly Client $client;
-
     /**
      * @param string $secretKey The secret key provided by Cloudflare.
      * @param LoggerInterface|null $logger Optional PSR-3 logger instance.
      */
     public function __construct(private readonly string $secretKey, private readonly ?LoggerInterface $logger = null)
     {
-        $this->client = new Client([
-            'base_uri' => self::TURNSTILE_VERIFY_URL
-        ]);
     }
 
     /**
@@ -75,7 +68,7 @@ class Turnstile implements TurnstileInterface
                 self::TURNSTILE_REQUEST_FIELD_NAME_RESPONSE => $token,
                 self::TURNSTILE_REQUEST_FIELD_NAME_REMOTE_IP => $remoteIp
             ]));
-        } catch (GuzzleException $exception) {
+        } catch (InternalTurnstileException $exception) {
             $response = [
                 TurnstileVerifyRelation::KEY_NAME_RESPONSE => false,
                 TurnstileVerifyRelation::KEY_NAME_ERROR_CODES => [
@@ -92,23 +85,41 @@ class Turnstile implements TurnstileInterface
      * @param array $data Request payload data.
      * @return array Decoded JSON response.
      *
-     * @throws GuzzleException If a network or HTTP error occurs.
      * @throws TurnstileException If the response is not valid JSON.
+     * @throws InternalTurnstileException If Turnstile server Internal error.
      */
     private function send(array $data): array
     {
-        $response = $this->client->post('', [
-            RequestOptions::HEADERS => [
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
+        $handle = curl_init(self::TURNSTILE_VERIFY_URL);
+
+        curl_setopt_array($handle, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
             ],
-            RequestOptions::JSON => $data,
+            CURLOPT_TIMEOUT => 5.0,
         ]);
 
-        $result = json_decode($response->getBody()->getContents(), true);
+        $response = curl_exec($handle);
+        $error = curl_error($handle);
+        $code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+
+        curl_close($handle);
+
+        if ($code >= 500) {
+            throw new InternalTurnstileException('Turnstile server Internal error. Code: ' . $code);
+        }
+        if (empty($error) === false) {
+            throw new TurnstileException('Couldn\'t connect the Turnstile server: ' . $error);
+        }
+
+        $result = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new TurnstileException(json_last_error_msg());
+            throw new TurnstileException('Error parsing the JSON response of the Turnstile: ' . json_last_error_msg());
         }
 
         return $result;
