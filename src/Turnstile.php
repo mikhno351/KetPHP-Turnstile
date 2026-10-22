@@ -115,6 +115,9 @@ class Turnstile implements TurnstileInterface
         if (empty($error) === false) {
             throw new TurnstileException('Couldn\'t connect the Turnstile server: ' . $error);
         }
+        if (is_string($response) === false) {
+            throw new TurnstileException('Failure getting Turnstile response: ' . $response);
+        }
 
         $result = json_decode($response, true);
 
