@@ -29,7 +29,7 @@ use KetPHP\Turnstile\Render\TurnstileRender;
 
 // Create instance
 $render = TurnstileRender::newInstance('YOUR_SITE_KEY')
-    ->withClass('your-custom-classes')
+    ->withClass('your', 'custom', 'classes')
     ->withAttribute('your-custom-attribute', 'true')
     ->withDataTheme(TurnstileRender::THEME_DARK)
     ->withDataSize(TurnstileRender::SIZE_NORMAL)
